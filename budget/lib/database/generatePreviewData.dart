@@ -71,11 +71,9 @@ Future deletePreviewData({bool resetOnboard = false}) async {
   await createDefaultCategories();
 
   loadingIndeterminateKey.currentState?.setVisibility(false);
-  updateSettings("previewDemo", false, updateGlobalState: false);
 }
 
 Future generatePreviewData() async {
-  updateSettings("previewDemo", true, updateGlobalState: false);
   loadingIndeterminateKey.currentState?.setVisibility(true);
   await createDefaultCategories();
   await database.createOrUpdateWallet(
@@ -830,36 +828,6 @@ Future generatePreviewData() async {
   loadingIndeterminateKey.currentState?.setVisibility(false);
 }
 
-class PreviewDemoWarning extends StatelessWidget {
-  const PreviewDemoWarning({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return appStateSettings["previewDemo"] == true
-        ? Padding(
-            padding: EdgeInsetsDirectional.only(
-                bottom: MediaQuery.viewPaddingOf(context).top),
-            child: Tappable(
-              onTap: () async {
-                deletePreviewData(resetOnboard: true);
-              },
-              child: Padding(
-                padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: 20, vertical: 10),
-                child: TextFont(
-                  text: "preview-demo-warning".tr(),
-                  textColor: Theme.of(context).colorScheme.onError,
-                  fontSize: 15,
-                  maxLines: 10,
-                ),
-              ),
-              color: Theme.of(context).colorScheme.error,
-            ),
-          )
-        : SizedBox.shrink();
-  }
-}
-
 class PreviewDemoButton extends StatelessWidget {
   const PreviewDemoButton({required this.nextNavigation, super.key});
   final Function nextNavigation;
@@ -899,29 +867,4 @@ class PreviewDemoButton extends StatelessWidget {
       return SizedBox.shrink();
     }
   }
-}
-
-Future<bool> checkLockedFeatureIfInDemoMode(BuildContext? context) async {
-  if (context == null && appStateSettings["previewDemo"] == true) return false;
-  if (appStateSettings["previewDemo"] == true) {
-    await openPopup(
-      context!,
-      icon: appStateSettings["outlinedIcons"]
-          ? Icons.warning_outlined
-          : Icons.warning_rounded,
-      title: "not-available-in-preview-demo".tr(),
-      description: "not-available-in-preview-demo-description".tr(),
-      onCancel: () {
-        popRoute(context);
-      },
-      onCancelLabel: "cancel".tr(),
-      onSubmit: () {
-        popAllRoutes(context);
-        deletePreviewData(resetOnboard: true);
-      },
-      onSubmitLabel: "exit-demo".tr(),
-    );
-    return false;
-  }
-  return true;
 }

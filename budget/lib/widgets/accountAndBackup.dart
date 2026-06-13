@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:budget/colors.dart';
-import 'package:budget/database/generatePreviewData.dart';
 import 'package:budget/database/tables.dart';
 import 'package:budget/firebase_options.dart';
 import 'package:budget/functions.dart';
@@ -81,7 +80,6 @@ Future<bool> signInGoogle(
     bool? silentSignIn,
     Function()? next}) async {
   // bool isConnected = false;
-  if (await checkLockedFeatureIfInDemoMode(context) == false) return false;
   if (appStateSettings["emailScanning"] == false) gMailPermissions = false;
 
   try {

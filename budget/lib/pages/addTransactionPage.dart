@@ -1,4 +1,3 @@
-import 'package:budget/database/generatePreviewData.dart';
 import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/pages/addBudgetPage.dart';
@@ -7,7 +6,6 @@ import 'package:budget/pages/addObjectivePage.dart';
 import 'package:budget/pages/addWalletPage.dart';
 import 'package:budget/pages/editAssociatedTitlesPage.dart';
 import 'package:budget/pages/editWalletsPage.dart';
-import 'package:budget/pages/premiumPage.dart';
 import 'package:budget/pages/settingsPage.dart';
 import 'package:budget/pages/sharedBudgetSettings.dart';
 import 'package:budget/pages/transactionsListPage.dart';
@@ -591,13 +589,6 @@ class _AddTransactionPageState extends State<AddTransactionPage>
 
       // recentlyAddedTransactionID.value =
 
-      if (widget.transaction == null &&
-          appStateSettings["purchaseID"] == null) {
-        updateSettings("premiumPopupAddTransactionCount",
-            (appStateSettings["premiumPopupAddTransactionCount"] ?? 0) + 1,
-            updateGlobalState: false);
-      }
-
       return true;
     } catch (e) {
       if (e.toString() == "category-no-longer-exists") {
@@ -780,7 +771,6 @@ class _AddTransactionPageState extends State<AddTransactionPage>
           openTransferBalancePopup();
           return;
         }
-        await premiumPopupAddTransaction(context);
         if (widget.startInitialAddTransactionSequence == false) return;
         if (appStateSettings["askForTransactionTitle"]) {
           openBottomSheet(
@@ -4436,14 +4426,10 @@ class _TransactionNotesTextInputState extends State<TransactionNotesTextInput> {
                                       : Icons.camera_alt_rounded,
                                   onTap: () async {
                                     popRoute(context);
-                                    if (await checkLockedFeatureIfInDemoMode(
-                                            context) ==
-                                        true) {
-                                      String? result = await getPhotoAndUpload(
-                                          source: ImageSource.camera);
-                                      if (result != null)
-                                        addAttachmentLinkToNote(result);
-                                    }
+                                    String? result = await getPhotoAndUpload(
+                                        source: ImageSource.camera);
+                                    if (result != null)
+                                      addAttachmentLinkToNote(result);
                                   },
                                 ),
                               ),
@@ -4468,13 +4454,9 @@ class _TransactionNotesTextInputState extends State<TransactionNotesTextInput> {
                                       : Icons.photo_library_rounded,
                                   onTap: () async {
                                     popRoute(context);
-                                    if (await checkLockedFeatureIfInDemoMode(
-                                            context) ==
-                                        true) {
-                                      String? result = await getPhotoAndUpload(
-                                          source: ImageSource.gallery);
-                                      addAttachmentLinkToNote(result);
-                                    }
+                                    String? result = await getPhotoAndUpload(
+                                        source: ImageSource.gallery);
+                                    addAttachmentLinkToNote(result);
                                   },
                                 ),
                               ),
@@ -4498,12 +4480,8 @@ class _TransactionNotesTextInputState extends State<TransactionNotesTextInput> {
                                     : Icons.file_open_rounded,
                                 onTap: () async {
                                   popRoute(context);
-                                  if (await checkLockedFeatureIfInDemoMode(
-                                          context) ==
-                                      true) {
-                                    String? result = await getFileAndUpload();
-                                    addAttachmentLinkToNote(result);
-                                  }
+                                  String? result = await getFileAndUpload();
+                                  addAttachmentLinkToNote(result);
                                 },
                               ),
                             ),

@@ -198,11 +198,7 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     "showMethodAdded": false,
     "showBackupLimit": false,
     "outlinedIcons": false,
-    "premiumPopupAddTransactionCount": -5,
-    "premiumPopupAddTransactionLastShown": DateTime.now().toString(),
-    "premiumPopupFreeSeen": false,
-    "previewDemo": false,
-    "purchaseID": null,
+
     "showAccountLabelTagInTransactionEntry": false,
     "showCurrencyLabel": false,
     "showTransactionsMonthlySpendingSummary": true,
