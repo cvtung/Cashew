@@ -279,6 +279,7 @@ class _SelectColorState extends State<SelectColor> {
               ),
             ),
           ),
+        ],
       ),
     );
   }
