@@ -1,4 +1,4 @@
-package com.budget.tracker_app
+package tungcv.cashew
 
 import android.appwidget.AppWidgetManager
 import android.content.Context
