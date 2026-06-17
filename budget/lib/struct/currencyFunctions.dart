@@ -31,7 +31,12 @@ Future<bool> getExchangeRates() async {
     print("Error getting currency rates: " + e.toString());
     return false;
   }
-  await _fetchGoldRateIntoCachedExchange(cachedCurrencyExchange);
+  // Gold rate is fetched independently and inserted into the same map
+  Map<String, dynamic> goldResult = await fetchGoldRate();
+  if (goldResult["ok"] == true) {
+    double usdPerLuong = goldResult["usdPerLuong"];
+    cachedCurrencyExchange["luongvang"] = 1 / usdPerLuong;
+  }
   // print(cachedCurrencyExchange);
   updateSettings(
     "cachedCurrencyExchange",
@@ -42,67 +47,78 @@ Future<bool> getExchangeRates() async {
   return true;
 }
 
-Future<void> _fetchGoldRateIntoCachedExchange(
-    Map<dynamic, dynamic> cachedCurrencyExchange) async {
+/// Fetches the current VND-per-luong gold price from vang.today and converts
+/// it into a USD-based rate suitable for the existing exchange rate map.
+///
+/// Returns a result map:
+///   - ok=true,  buyVndPerLuong, usdPerLuong, stored
+///   - ok=false, error (String describing why)
+/// Caller decides whether to write into the cached exchange map.
+Future<Map<String, dynamic>> fetchGoldRate() async {
   try {
     Uri url = Uri.parse("https://vang.today/api/prices?type=BT9999NTT");
     print("[gold] GET $url");
     dynamic response = await http.get(url);
     print("[gold] status=${response.statusCode}");
     if (response.statusCode != 200) {
-      openSnackbar(SnackbarMessage(
-        title: "Could not fetch gold rate",
-        icon: Icons.error_outline,
-      ));
-      return;
+      String err = "HTTP ${response.statusCode}";
+      print("[gold] error: $err");
+      return {"ok": false, "error": err};
     }
     dynamic body = json.decode(response.body);
     print("[gold] body=$body");
     if (body is! Map || body["success"] != true) {
-      openSnackbar(SnackbarMessage(
-        title: "Could not fetch gold rate",
-        icon: Icons.error_outline,
-      ));
-      return;
+      return {"ok": false, "error": "Invalid body shape"};
     }
     dynamic buy = body["buy"];
     if (buy is! num || buy <= 0) {
-      openSnackbar(SnackbarMessage(
-        title: "Could not fetch gold rate",
-        icon: Icons.error_outline,
-      ));
-      return;
+      return {"ok": false, "error": "Missing/invalid buy price"};
     }
-    // buy is VND per lượng (tael of gold)
-    // cachedCurrencyExchange stores USD->X rates, so we need USD price per lượng
-    dynamic vndPerUsd = cachedCurrencyExchange["vnd"];
-    print("[gold] buyVndPerLuong=$buy vndPerUsd=$vndPerUsd");
+    double buyVndPerLuong = buy.toDouble();
+    Map<dynamic, dynamic> cached = appStateSettings["cachedCurrencyExchange"];
+    dynamic vndPerUsd = cached is Map ? cached["vnd"] : null;
     if (vndPerUsd is! num || vndPerUsd <= 0) {
-      print("[gold] skip: vnd rate unavailable, cannot compute USD price");
-      openSnackbar(SnackbarMessage(
-        title: "Could not fetch gold rate (missing VND rate)",
-        icon: Icons.error_outline,
-      ));
-      return;
+      // Fetch VND rate independently so we don't depend on the earlier API call
+      try {
+        Uri vndUrl = Uri.parse(
+            "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/vnd.min.json");
+        dynamic r = await http.get(vndUrl);
+        if (r.statusCode == 200) {
+          // 1 VND = X USD  =>  vndPerUsd = 1 / X
+          dynamic vndToUsd = json.decode(r.body)?["vnd"]?["usd"];
+          if (vndToUsd is num && vndToUsd > 0) {
+            vndPerUsd = 1 / vndToUsd.toDouble();
+          }
+        }
+      } catch (e) {
+        print("[gold] vnd fallback fetch error: $e");
+      }
+      if (vndPerUsd is! num || vndPerUsd <= 0) {
+        String err = "VND rate unavailable";
+        print("[gold] error: $err");
+        return {"ok": false, "error": err, "buyVndPerLuong": buyVndPerLuong};
+      }
     }
-    double usdPerLuong = buy.toDouble() / vndPerUsd.toDouble();
+    double usdPerLuong = buyVndPerLuong / vndPerUsd.toDouble();
     double stored = 1 / usdPerLuong;
-    // stored as 1 USD = X luongvang
-    cachedCurrencyExchange["luongvang"] = stored;
-    print("[gold] usdPerLuong=$usdPerLuong stored(1USD=X luongvang)=$stored");
-    // Stash raw buy + timestamp for UI display in ExchangeRatesPage
+    print("[gold] buyVndPerLuong=$buyVndPerLuong vndPerUsd=$vndPerUsd usdPerLuong=$usdPerLuong stored=$stored");
     Map<String, dynamic> goldInfo = {
-      "buyVndPerLuong": buy.toDouble(),
+      "buyVndPerLuong": buyVndPerLuong,
       "fetchedAt": DateTime.now().toIso8601String(),
       "source": "vang.today?type=BT9999NTT",
     };
     updateSettings("goldRateInfo", goldInfo, updateGlobalState: false);
+    return {
+      "ok": true,
+      "buyVndPerLuong": buyVndPerLuong,
+      "usdPerLuong": usdPerLuong,
+      "stored": stored,
+    };
   } catch (e) {
-    print("[gold] error: " + e.toString());
-    openSnackbar(SnackbarMessage(
-      title: "Could not fetch gold rate",
-      icon: Icons.error_outline,
-    ));
+    print("[gold] exception: $e");
+    return {"ok": false, "error": e.toString()};
+  }
+}
   }
 }
 

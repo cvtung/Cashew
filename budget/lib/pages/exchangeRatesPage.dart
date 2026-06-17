@@ -458,7 +458,39 @@ bool checkIfExchangeRateChangeAfter() {
   }
 }
 
-class _GoldRateInfoBox extends StatelessWidget {
+class _GoldRateInfoBox extends StatefulWidget {
+  @override
+  State<_GoldRateInfoBox> createState() => _GoldRateInfoBoxState();
+}
+
+class _GoldRateInfoBoxState extends State<_GoldRateInfoBox> {
+  bool _loading = false;
+
+  Future<void> _refreshGold() async {
+    if (_loading) return;
+    setState(() => _loading = true);
+    Map<String, dynamic> result = await fetchGoldRate();
+    setState(() => _loading = false);
+    if (result["ok"] == true) {
+      // Insert into cached exchange rates so conversions work immediately
+      Map<dynamic, dynamic> cached = appStateSettings["cachedCurrencyExchange"];
+      cached["luongvang"] = result["stored"];
+      updateSettings("cachedCurrencyExchange", cached,
+          updateGlobalState: true);
+      openSnackbar(SnackbarMessage(
+        title:
+            "Gold rate updated: 1 lượng = ${(result["buyVndPerLuong"] as double).toStringAsFixed(0)} VND",
+        icon: Icons.check_circle_outline,
+      ));
+    } else {
+      openSnackbar(SnackbarMessage(
+        title: "Could not fetch gold rate: ${result["error"]}",
+        icon: Icons.error_outline,
+        timeout: const Duration(seconds: 5),
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Map<String, dynamic>? info = appStateSettings["goldRateInfo"];
@@ -525,6 +557,24 @@ class _GoldRateInfoBox extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     textAlign: TextAlign.center,
                   ),
+                  SizedBox(width: 6),
+                  _loading
+                      ? SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Tappable(
+                          onTap: _refreshGold,
+                          child: Padding(
+                            padding: const EdgeInsetsDirectional.all(4),
+                            child: Icon(
+                              Icons.refresh,
+                              size: 18,
+                              color: getColor(context, "textLight"),
+                            ),
+                          ),
+                        ),
                 ],
               ),
               SizedBox(height: 6),
