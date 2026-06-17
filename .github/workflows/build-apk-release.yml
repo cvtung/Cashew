@@ -61,14 +61,23 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Check keystore secret
+        id: check_keystore
+        run: |
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Decode keystore (if available)
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        if: steps.check_keystore.outputs.available == 'true'
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/keystore.jks
         working-directory: budget
 
       - name: Generate key.properties (if keystore available)
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        if: steps.check_keystore.outputs.available == 'true'
         run: |
           echo "storeFile=keystore.jks" > android/key.properties
           echo "keyAlias=${{ secrets.KEYSTORE_KEY_ALIAS }}" >> android/key.properties
