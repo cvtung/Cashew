@@ -119,8 +119,6 @@ Future<Map<String, dynamic>> fetchGoldRate() async {
     return {"ok": false, "error": e.toString()};
   }
 }
-  }
-}
 
 double amountRatioToPrimaryCurrencyGivenPk(
   AllWallets allWallets,
