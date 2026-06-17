@@ -2638,7 +2638,6 @@ class _AllSpendingPastSpendingGraphState
                       ),
                     ],
                   ),
-                ),
               ),
               Transform.translate(
                 offset: Offset(0, -1),

@@ -175,8 +175,8 @@ class _SelectColorState extends State<SelectColor> {
               );
             },
           ),
-        ),
-      );
+      ),
+    );
     }
     return Padding(
       padding: const EdgeInsetsDirectional.only(bottom: 8.0),
@@ -279,7 +279,6 @@ class _SelectColorState extends State<SelectColor> {
               ),
             ),
           ),
-        ],
       ),
     );
   }
@@ -526,7 +525,6 @@ class _ColorIconCustomState extends State<ColorIconCustom> {
               color: Theme.of(context).colorScheme.secondary,
             ),
           ),
-        ),
       ),
     );
   }
