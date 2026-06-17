@@ -2659,8 +2659,8 @@
   },
   "luongvang": {
     "Currency": "Lượng vàng",
-    "Code": "LƯỢNGVÀNG",
-    "Symbol": "luongvang",
+    "Code": "Lượng",
+    "Symbol": "",
     "CountryName": "Viet Nam",
     "CountryCode": "VN"
   },

@@ -143,6 +143,9 @@ class _ExchangeRatesState extends State<ExchangeRates> {
       ],
       slivers: [
         SliverToBoxAdapter(
+          child: _GoldRateInfoBox(),
+        ),
+        SliverToBoxAdapter(
           child: AboutInfoBox(
             title: "exchange-rates-api".tr(),
             link: "https://github.com/fawazahmed0/exchange-api",
@@ -452,5 +455,108 @@ bool checkIfExchangeRateChangeAfter() {
     return true;
   } else {
     return false;
+  }
+}
+
+class _GoldRateInfoBox extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    Map<String, dynamic>? info = appStateSettings["goldRateInfo"];
+    double? buyVnd = info?["buyVndPerLuong"];
+    String? fetchedAt = info?["fetchedAt"];
+    String? source = info?["source"];
+
+    String rateLine;
+    String timeLine;
+    if (buyVnd == null) {
+      rateLine = "Gold rate not fetched yet";
+      timeLine = "Pull down to refresh, or wait for next sync";
+    } else {
+      String formatted = buyVnd.toStringAsFixed(0);
+      String withSep = formatted.replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+      rateLine = "1 lượng vàng = $withSep VND";
+      if (fetchedAt != null) {
+        try {
+          DateTime t = DateTime.parse(fetchedAt).toLocal();
+          timeLine =
+              "Updated ${t.year}-${t.month.toString().padLeft(2, '0')}-${t.day.toString().padLeft(2, '0')} "
+              "${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}";
+        } catch (e) {
+          timeLine = "Updated $fetchedAt";
+        }
+      } else {
+        timeLine = "";
+      }
+    }
+
+    return Padding(
+      padding: EdgeInsetsDirectional.symmetric(horizontal: 15, vertical: 5),
+      child: Tappable(
+        onTap: () {
+          if (source != null) openUrl(source);
+        },
+        onLongPress: () {
+          if (source != null) copyToClipboard(source);
+        },
+        color: appStateSettings["materialYou"]
+            ? dynamicPastel(context,
+                Theme.of(context).colorScheme.secondaryContainer,
+                amountLight: 0.2, amountDark: 0.6)
+            : getColor(context, "lightDarkAccent"),
+        borderRadius: getPlatform() == PlatformOS.isIOS ? 10 : 15,
+        child: Padding(
+          padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: 13, vertical: 12),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.monetization_on_outlined,
+                    size: 18,
+                    color: getColor(context, "textLight"),
+                  ),
+                  SizedBox(width: 6),
+                  TextFont(
+                    text: "Lượng vàng (SJC 9999)",
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+              SizedBox(height: 6),
+              TextFont(
+                text: rateLine,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                textAlign: TextAlign.center,
+              ),
+              if (timeLine.isNotEmpty) ...[
+                SizedBox(height: 4),
+                TextFont(
+                  text: timeLine,
+                  fontSize: 12,
+                  textAlign: TextAlign.center,
+                  textColor: getColor(context, "textLight"),
+                ),
+              ],
+              if (source != null) ...[
+                SizedBox(height: 6),
+                TextFont(
+                  text: source,
+                  fontSize: 11,
+                  textAlign: TextAlign.center,
+                  textColor: getColor(context, "textLight"),
+                  maxLines: 1,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

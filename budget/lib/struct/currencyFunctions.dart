@@ -46,7 +46,9 @@ Future<void> _fetchGoldRateIntoCachedExchange(
     Map<dynamic, dynamic> cachedCurrencyExchange) async {
   try {
     Uri url = Uri.parse("https://vang.today/api/prices?type=BT9999NTT");
+    print("[gold] GET $url");
     dynamic response = await http.get(url);
+    print("[gold] status=${response.statusCode}");
     if (response.statusCode != 200) {
       openSnackbar(SnackbarMessage(
         title: "Could not fetch gold rate",
@@ -55,6 +57,7 @@ Future<void> _fetchGoldRateIntoCachedExchange(
       return;
     }
     dynamic body = json.decode(response.body);
+    print("[gold] body=$body");
     if (body is! Map || body["success"] != true) {
       openSnackbar(SnackbarMessage(
         title: "Could not fetch gold rate",
@@ -73,12 +76,25 @@ Future<void> _fetchGoldRateIntoCachedExchange(
     // buy is VND per lượng (tael of gold)
     // cachedCurrencyExchange stores USD->X rates, so we need USD price per lượng
     dynamic vndPerUsd = cachedCurrencyExchange["vnd"];
-    if (vndPerUsd is! num || vndPerUsd <= 0) return;
+    print("[gold] buyVndPerLuong=$buy vndPerUsd=$vndPerUsd");
+    if (vndPerUsd is! num || vndPerUsd <= 0) {
+      print("[gold] skip: vnd rate unavailable, cannot compute USD price");
+      return;
+    }
     double usdPerLuong = buy.toDouble() / vndPerUsd.toDouble();
+    double stored = 1 / usdPerLuong;
     // stored as 1 USD = X luongvang
-    cachedCurrencyExchange["luongvang"] = 1 / usdPerLuong;
+    cachedCurrencyExchange["luongvang"] = stored;
+    print("[gold] usdPerLuong=$usdPerLuong stored(1USD=X luongvang)=$stored");
+    // Stash raw buy + timestamp for UI display in ExchangeRatesPage
+    Map<String, dynamic> goldInfo = {
+      "buyVndPerLuong": buy.toDouble(),
+      "fetchedAt": DateTime.now().toIso8601String(),
+      "source": "vang.today?type=BT9999NTT",
+    };
+    updateSettings("goldRateInfo", goldInfo, updateGlobalState: false);
   } catch (e) {
-    print("Error getting gold rate: " + e.toString());
+    print("[gold] error: " + e.toString());
     openSnackbar(SnackbarMessage(
       title: "Could not fetch gold rate",
       icon: Icons.error_outline,
