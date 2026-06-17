@@ -1201,6 +1201,7 @@ List<String> popularCurrencies = [
   'inr', // Indian Rupee
   'nok', // Norwegian Krone
   'krw', // South Korean Won
+  'luongvang', // Vietnamese Gold Tael
   'btc', // Bitcoin
 ];
 

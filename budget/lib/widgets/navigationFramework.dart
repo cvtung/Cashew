@@ -294,7 +294,6 @@ GlobalKey<NavigationSidebarState> sidebarStateKey = GlobalKey();
 GlobalKey<GlobalLoadingProgressState> loadingProgressKey = GlobalKey();
 GlobalKey<GlobalLoadingIndeterminateState> loadingIndeterminateKey =
     GlobalKey();
-GlobalKey<GlobalSnackbarState> snackbarKey = GlobalKey();
 GlobalKey<RenderHomePageWidgetsState> renderHomePageWidgetsKey = GlobalKey();
 
 late bool entireAppLoaded;

@@ -1,6 +1,9 @@
 import 'package:budget/struct/settings.dart';
 import 'dart:convert';
 import 'package:budget/database/tables.dart';
+import 'package:budget/widgets/globalSnackbar.dart';
+import 'package:budget/widgets/openSnackbar.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
@@ -28,6 +31,7 @@ Future<bool> getExchangeRates() async {
     print("Error getting currency rates: " + e.toString());
     return false;
   }
+  await _fetchGoldRateIntoCachedExchange(cachedCurrencyExchange);
   // print(cachedCurrencyExchange);
   updateSettings(
     "cachedCurrencyExchange",
@@ -36,6 +40,50 @@ Future<bool> getExchangeRates() async {
         appStateSettings["cachedCurrencyExchange"].keys.length <= 0,
   );
   return true;
+}
+
+Future<void> _fetchGoldRateIntoCachedExchange(
+    Map<dynamic, dynamic> cachedCurrencyExchange) async {
+  try {
+    Uri url = Uri.parse("https://vang.today/api/prices?type=BT9999NTT");
+    dynamic response = await http.get(url);
+    if (response.statusCode != 200) {
+      openSnackbar(SnackbarMessage(
+        title: "Could not fetch gold rate",
+        icon: Icons.error_outline,
+      ));
+      return;
+    }
+    dynamic body = json.decode(response.body);
+    if (body is! Map || body["success"] != true) {
+      openSnackbar(SnackbarMessage(
+        title: "Could not fetch gold rate",
+        icon: Icons.error_outline,
+      ));
+      return;
+    }
+    dynamic buy = body["buy"];
+    if (buy is! num || buy <= 0) {
+      openSnackbar(SnackbarMessage(
+        title: "Could not fetch gold rate",
+        icon: Icons.error_outline,
+      ));
+      return;
+    }
+    // buy is VND per lượng (tael of gold)
+    // cachedCurrencyExchange stores USD->X rates, so we need USD price per lượng
+    dynamic vndPerUsd = cachedCurrencyExchange["vnd"];
+    if (vndPerUsd is! num || vndPerUsd <= 0) return;
+    double usdPerLuong = buy.toDouble() / vndPerUsd.toDouble();
+    // stored as 1 USD = X luongvang
+    cachedCurrencyExchange["luongvang"] = 1 / usdPerLuong;
+  } catch (e) {
+    print("Error getting gold rate: " + e.toString());
+    openSnackbar(SnackbarMessage(
+      title: "Could not fetch gold rate",
+      icon: Icons.error_outline,
+    ));
+  }
 }
 
 double amountRatioToPrimaryCurrencyGivenPk(

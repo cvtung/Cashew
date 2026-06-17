@@ -9,7 +9,7 @@ on:
       build_mode:
         description: 'Build mode'
         required: true
-        default: 'debug'
+        default: 'release'
         type: choice
         options:
           - debug
@@ -99,22 +99,33 @@ jobs:
 
       - name: Build debug APK
         if: ${{ github.event.inputs.build_mode == 'debug' || github.event.inputs.build_mode == '' }}
-        run: flutter build apk --debug
+        run: flutter build apk --debug --split-per-abi
 
       - name: Build release APK
         if: ${{ github.event.inputs.build_mode == 'release' || startsWith(github.ref, 'refs/tags/') }}
-        run: flutter build apk --release
+        run: flutter build apk --release --split-per-abi
 
-      - name: Rename APK
+      - name: Rename and collect APKs
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
+          
+          # Determine build mode from what's available
           MODE="debug"
-          if [[ -f build/app/outputs/flutter-apk/app-release.apk ]]; then
+          PATTERN="*-debug"
+          if ls build/app/outputs/flutter-apk/app-*-release.apk 2>/dev/null | head -1 | grep -q release; then
             MODE="release"
-            cp build/app/outputs/flutter-apk/app-release.apk "CashewVN-${VERSION}-${MODE}.apk"
-          else
-            cp build/app/outputs/flutter-apk/app-debug.apk "CashewVN-${VERSION}-${MODE}.apk"
+            PATTERN="*-release"
           fi
+          
+          find build/app/outputs/flutter-apk/ -name "app-${PATTERN}.apk" | while read -r apk; do
+            arch=$(echo "$apk" | sed -E "s/.*app-(.*)-${MODE}\.apk/\1/")
+            if [ "$arch" = "${MODE}" ]; then
+              # single APK fallback (no split)
+              cp "$apk" "CashewVN-${VERSION}-${MODE}.apk"
+            else
+              cp "$apk" "CashewVN-${VERSION}-${MODE}-${arch}.apk"
+            fi
+          done
         working-directory: budget
 
       - name: Upload APK as artifact
@@ -124,10 +135,31 @@ jobs:
           path: budget/CashewVN-*.apk
           retention-days: 30
 
+      - name: Generate release tag
+        id: release_tag
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=v${{ steps.version.outputs.VERSION }}-build-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create tag (workflow_dispatch release only)
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.build_mode == 'release' }}
+        run: |
+          TAG="${{ steps.release_tag.outputs.tag }}"
+          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+            git config user.name "github-actions"
+            git config user.email "github-actions@github.com"
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi
+
       - name: Create Release
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/') || github.event.inputs.build_mode == 'release' }}
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.release_tag.outputs.tag }}
           name: Cashew VN ${{ steps.version.outputs.VERSION }}
           body: |
             Cashew VN - Build ${{ steps.version.outputs.VERSION }}
@@ -136,8 +168,7 @@ jobs:
             - App name: Cashew VN
             - This build can be installed alongside the official Cashew app.
 
-            ## APK Downloads
-            - CashewVN-${{ steps.version.outputs.VERSION }}.apk
+            ## APK Downloads (attached below)
           files: |
             budget/CashewVN-*.apk
           generate_release_notes: false

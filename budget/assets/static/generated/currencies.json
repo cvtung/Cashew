@@ -2657,6 +2657,13 @@
     "CountryName": "Viet Nam",
     "CountryCode": "VN"
   },
+  "luongvang": {
+    "Currency": "Lượng vàng",
+    "Code": "LƯỢNGVÀNG",
+    "Symbol": "luongvang",
+    "CountryName": "Viet Nam",
+    "CountryCode": "VN"
+  },
   "voxel": {
     "Currency": "Voxies",
     "Code": "voxel",

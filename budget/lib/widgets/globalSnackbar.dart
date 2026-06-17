@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:budget/colors.dart';
 import 'package:pausable_timer/pausable_timer.dart';
 
+GlobalKey<GlobalSnackbarState> snackbarKey = GlobalKey();
+
 class GlobalSnackbar extends StatefulWidget {
   const GlobalSnackbar({Key? key}) : super(key: key);
 
