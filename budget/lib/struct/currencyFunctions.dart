@@ -79,6 +79,10 @@ Future<void> _fetchGoldRateIntoCachedExchange(
     print("[gold] buyVndPerLuong=$buy vndPerUsd=$vndPerUsd");
     if (vndPerUsd is! num || vndPerUsd <= 0) {
       print("[gold] skip: vnd rate unavailable, cannot compute USD price");
+      openSnackbar(SnackbarMessage(
+        title: "Could not fetch gold rate (missing VND rate)",
+        icon: Icons.error_outline,
+      ));
       return;
     }
     double usdPerLuong = buy.toDouble() / vndPerUsd.toDouble();
