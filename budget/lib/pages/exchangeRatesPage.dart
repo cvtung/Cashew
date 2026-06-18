@@ -554,7 +554,7 @@ class _GoldRateInfoBoxState extends State<_GoldRateInfoBox> {
                   ),
                   SizedBox(width: 6),
                   TextFont(
-                    text: "Lượng vàng (SJC 9999)",
+                    text: "Lượng vàng (BT9999NTT)",
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     textAlign: TextAlign.center,

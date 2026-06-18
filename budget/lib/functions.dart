@@ -253,13 +253,21 @@ String convertToMoney(AllWallets allWallets, double amount,
   String formatOutput = formatter.format(amount).trim();
   String? currencyName;
   if (addCurrencyName == true && currencyKey != null) {
-    currencyName = " " + currencyKey.toUpperCase();
+    // Prefer the display Code from currenciesJSON (preserves case + diacritics);
+    // fall back to the uppercase key when no Code is defined.
+    String? codeFromJson = currenciesJSON[currencyKey]?["Code"]?.toString();
+    currencyName = " " + (codeFromJson != null && codeFromJson.isNotEmpty
+        ? codeFromJson
+        : currencyKey.toUpperCase());
   } else if (addCurrencyName == true) {
+    String? selectedKey =
+        allWallets.indexedByPk[appStateSettings["selectedWalletPk"]]?.currency;
+    String? codeFromJson =
+        selectedKey != null ? currenciesJSON[selectedKey]?["Code"]?.toString() : null;
     currencyName = " " +
-        (allWallets.indexedByPk[appStateSettings["selectedWalletPk"]]
-                    ?.currency ??
-                "")
-            .toUpperCase();
+        (codeFromJson != null && codeFromJson.isNotEmpty
+            ? codeFromJson
+            : (selectedKey ?? "").toUpperCase());
   }
 
   if (useCustomNumberFormat) {
