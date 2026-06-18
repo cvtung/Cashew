@@ -262,8 +262,10 @@ String convertToMoney(AllWallets allWallets, double amount,
   } else if (addCurrencyName == true) {
     String? selectedKey =
         allWallets.indexedByPk[appStateSettings["selectedWalletPk"]]?.currency;
-    String? codeFromJson =
-        selectedKey != null ? currenciesJSON[selectedKey]?["Code"]?.toString() : null;
+    String? codeFromJson;
+    if (selectedKey != null) {
+      codeFromJson = currenciesJSON[selectedKey]?["Code"]?.toString();
+    }
     currencyName = " " +
         (codeFromJson != null && codeFromJson.isNotEmpty
             ? codeFromJson
