@@ -11,6 +11,7 @@ import 'package:budget/struct/initializeBiometrics.dart';
 import 'package:budget/widgets/util/appLinks.dart';
 import 'package:budget/widgets/util/onAppResume.dart';
 import 'package:budget/widgets/util/watchForDayChange.dart';
+import 'package:budget/widgets/util/watchForExchangeRateUpdate.dart';
 import 'package:budget/widgets/watchAllWallets.dart';
 import 'package:budget/database/tables.dart';
 import 'package:budget/struct/databaseGlobal.dart';
@@ -151,13 +152,15 @@ class App extends StatelessWidget {
           onAppResume: () async {
             await setHighRefreshRate();
           },
-          child: InitializeBiometrics(
-            child: InitializeNotificationService(
-              child: InitializeAppLinks(
-                child: WatchForDayChange(
-                  child: WatchSelectedWalletPk(
-                    child: WatchAllWallets(
-                      child: child ?? SizedBox.shrink(),
+          child: WatchForExchangeRateUpdate(
+            child: InitializeBiometrics(
+              child: InitializeNotificationService(
+                child: InitializeAppLinks(
+                  child: WatchForDayChange(
+                    child: WatchSelectedWalletPk(
+                      child: WatchAllWallets(
+                        child: child ?? SizedBox.shrink(),
+                      ),
                     ),
                   ),
                 ),

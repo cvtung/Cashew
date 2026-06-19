@@ -3,6 +3,7 @@ import 'package:budget/functions.dart';
 import 'package:budget/pages/addWalletPage.dart';
 import 'package:budget/pages/homePage/homePageWalletSwitcher.dart';
 import 'package:budget/pages/transactionFilters.dart';
+import 'package:budget/struct/currencyFunctions.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/animatedExpanded.dart';
 import 'package:budget/widgets/fadeIn.dart';
@@ -412,5 +413,24 @@ Future<bool> setPrimaryWallet(String walletPk, {AllWallets? allWallets}) async {
     await updateSettings("selectedWalletPk", walletPk, updateGlobalState: true);
   }
   selectedWalletPkController.add(SelectedWalletPk(selectedWalletPk: walletPk));
+
+  // If the newly selected wallet uses luongvang, eagerly fetch the gold rate
+  // so conversions are accurate immediately instead of waiting for the next
+  // periodic refresh or manual sync.
+  if (allWallets != null) {
+    String? currency = allWallets.indexedByPk[walletPk]?.currency;
+    if (currency == "luongvang") {
+      fetchGoldRate().then((result) {
+        if (result["ok"] == true) {
+          Map<dynamic, dynamic> cached =
+              Map.from(appStateSettings["cachedCurrencyExchange"] ?? {});
+          cached["luongvang"] = result["stored"];
+          updateSettings("cachedCurrencyExchange", cached,
+              updateGlobalState: true);
+        }
+      });
+    }
+  }
+
   return true;
 }

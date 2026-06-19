@@ -110,6 +110,20 @@ class _AddWalletPageState extends State<AddWalletPage> {
     } else {
       walletInitial = await createTransactionWallet();
     }
+
+    // If the saved wallet uses luongvang, eagerly fetch the gold rate so
+    // conversions are accurate immediately without waiting for periodic refresh.
+    if (selectedCurrency == "luongvang") {
+      fetchGoldRate().then((result) {
+        if (result["ok"] == true) {
+          Map<dynamic, dynamic> cached =
+              Map.from(appStateSettings["cachedCurrencyExchange"] ?? {});
+          cached["luongvang"] = result["stored"];
+          updateSettings("cachedCurrencyExchange", cached,
+              updateGlobalState: true);
+        }
+      });
+    }
   }
 
   Future<TransactionWallet> createTransactionWallet() async {
